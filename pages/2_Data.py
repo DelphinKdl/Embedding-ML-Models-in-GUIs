@@ -7,7 +7,7 @@ st.title("Data Page")
 #load data
 @st.cache_data(persist=True)
 def load_data():
-    data = pd.read_csv()
+    data = pd.read_csv('data\Customer-churn.csv')
     return data
 
 st.dataframe(load_data())
