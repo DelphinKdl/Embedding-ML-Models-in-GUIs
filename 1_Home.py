@@ -31,10 +31,10 @@ with col1:
     # about app
     st.subheader('About the App')
     st.markdown(""" 
-      Welcome to the Customer Churn Prediction Application. This tool is designed to help businesses in the telecommunications industry understand and predict customer churn. By leveraging advanced machine learning models, the application provides insights into customer behavior, identifies at-risk customers, and aids in the development of targeted retention strategies. This Home page serves as an entry point to the various features and functionalities offered by the application.
-  
+    Welcome to the Customer Churn Prediction Application. This tool is designed to help businesses in the telecommunications industry understand and predict customer churn. By leveraging advanced machine learning models, the application provides insights into customer behavior, identifies at-risk customers, and aids in the development of targeted retention strategies. This Home page serves as an entry point to the various features and functionalities offered by the application.
+
     """)
-   # Benefits
+# Benefits
     st.subheader(" User Benefits")
     st.markdown("""
     - **Data-driven Decisions**: Make informed decisions backed by data analytics.
