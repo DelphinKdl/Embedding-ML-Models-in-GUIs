@@ -1,7 +1,9 @@
 
 # project dependencies 
 streamlit
+Joblib
 pyodbc  
+imbalanced-learn
 sqlalchemy
 python-dotenv 
 pandas
@@ -10,5 +12,7 @@ matplotlib
 seaborn
 scipy
 scikit-learn
-ipykernel    
-warnings
+ipykernel
+openpyxl
+PyYAML
+plotly

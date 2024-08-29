@@ -1,0 +1,13 @@
+credentials:
+  usernames:
+    guestuser:
+      email: ntacyodelphin@gmail.com
+      name: Test User
+      password: "$$test@@" # This should be a hashed password
+cookie:
+  expiry_days: 0
+  key: cookie_signature_key
+  name: cookie_name
+preauthorized:
+  usernames:
+    - Test User
