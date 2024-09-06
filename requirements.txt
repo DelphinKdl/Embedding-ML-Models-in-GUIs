@@ -11,8 +11,9 @@ numpy
 matplotlib
 seaborn
 scipy
-scikit-learn
+scikit-learn==1.5.0
 ipykernel
 openpyxl
 PyYAML
+streamlit-authenticator
 plotly
