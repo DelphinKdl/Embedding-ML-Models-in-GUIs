@@ -29,6 +29,6 @@ COPY ./ ./
 ENV PATH="/usr/app/src/GUIenv/bin:$PATH"
 
 # Image purpose
-CMD ["streamlit", "run", "1_Home.py"]
+CMD ["streamlit", "run", "app.py"]
 
 LABEL maintainer="Delphin K. <delphin.kaduli@gmail.com>"

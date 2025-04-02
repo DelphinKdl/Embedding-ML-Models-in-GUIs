@@ -8,11 +8,14 @@ from plotly.subplots import make_subplots
 import os
 import warnings
 warnings.filterwarnings('ignore')
+import yaml
+import streamlit_authenticator as stauth
+from streamlit_authenticator.utilities import Hasher
+import Data, Predict, History, Dashboard
 
-#if 'authentication_status' in st.session_state and st.session_state['authentication_status']:
-    # 1. Add CSS for title styling and zoom-in animation
-st.write("""
-<style>
+def show_Dashboard():
+    st.write("""
+    <style>
     .dashboard-title {
         font-size: 48px;
         font-weight: bold;
@@ -35,154 +38,154 @@ st.write("""
         bottom: -5px; /* Adjust this value as needed */
         border-bottom: 4px solid #4b8bbe;
     }
-</style>
-""", unsafe_allow_html=True)
+    </style>
+    """, unsafe_allow_html=True)
 
-# Dashboard title
-st.title("Customer Churn Dashboard")            
+    # Dashboard title
+    st.title("Customer Churn Dashboard")            
 
-# Overview Section
-st.header("Overview")
-st.markdown("""
-This dashboard provides insights into customer churn data, helping you understand the factors influencing churn and make data-driven decisions to improve customer retention.
-""")
+    # Overview Section
+    st.header("Overview")
+    st.markdown("""
+    This dashboard provides insights into customer churn data, helping you understand the factors influencing churn and make data-driven decisions to improve customer retention.
+    """)
 
-# 2. Load your dataset
-data = pd.read_csv('./data/training_data.csv')
-
-
-# 3. Filters
-st.sidebar.subheader(" Dashboard Filters")
-
-# Create for Gender
-gender = st.sidebar.multiselect("Pick your Gender", data["gender"].unique())
-if not gender:
-    filtered_data = data.copy()
-else:
-    filtered_data = data[data["gender"].isin(gender)]
-
-# Create for payment type
-paymentmethod = st.sidebar.multiselect("Pick your Payment Method", data["paymentmethod"].unique())
-if paymentmethod:
-    filtered_data = filtered_data[filtered_data["paymentmethod"].isin(paymentmethod)]
-
-# Create for Contract type
-contract = st.sidebar.multiselect("Pick your Contract", data["contract"].unique())
-if contract:
-    filtered_data = filtered_data[filtered_data["contract"].isin(contract)]
-
-# 4. Define EDA Function
-def eda_dash():
+    # 2. Load your dataset
+    data = pd.read_csv('./data/training_data.csv')
 
 
-    # Add an animated text
-    st.write('<div "><h3>Delve into Eploratory Data Analysis Insights</h3></div>', unsafe_allow_html=True)
+    # 3. Filters
+    st.sidebar.subheader(" Dashboard Filters")
 
-# 4.1 Scatter Plot with conditional coloring
-    scatter_plot = px.scatter(
-        filtered_data,
-        x='tenure',
-        y='monthlycharges',
-        color='churn',
-        color_discrete_map={'yes': 'red', 'no': 'skyblue'},  
-        title='Scatter Plot for Tenur vs Monthly charges'
-    )
+    # Create for Gender
+    gender = st.sidebar.multiselect("Pick your Gender", data["gender"].unique())
+    if not gender:
+        filtered_data = data.copy()
+    else:
+        filtered_data = data[data["gender"].isin(gender)]
 
-    # Update marker properties for better visualization
-    scatter_plot.update_traces(marker=dict(size=10, opacity=0.8, line=dict(width=2, color='DarkSlateGrey')))
-    # Display the chart using Streamlit
-    st.plotly_chart(scatter_plot)
+    # Create for payment type
+    paymentmethod = st.sidebar.multiselect("Pick your Payment Method", data["paymentmethod"].unique())
+    if paymentmethod:
+        filtered_data = filtered_data[filtered_data["paymentmethod"].isin(paymentmethod)]
+
+    # Create for Contract type
+    contract = st.sidebar.multiselect("Pick your Contract", data["contract"].unique())
+    if contract:
+        filtered_data = filtered_data[filtered_data["contract"].isin(contract)]
+
+    # 4. Define EDA Function
+    def eda_dash():
 
 
-# 4.2 Histograms
-    col1, col2 = st.columns(2)
-    with col1:
-        fig = px.histogram(filtered_data, x="tenure", color="churn", marginal="box", nbins=50, title="Histogram for Tenure")
+        # Add an animated text
+        st.write('<div "><h3>Delve into Eploratory Data Analysis Insights</h3></div>', unsafe_allow_html=True)
+
+        # 4.1 Scatter Plot with conditional coloring
+        scatter_plot = px.scatter(
+            filtered_data,
+            x='tenure',
+            y='monthlycharges',
+            color='churn',
+            color_discrete_map={'yes': 'red', 'no': 'skyblue'},  
+            title='Scatter Plot for Tenur vs Monthly charges'
+        )
+
+        # Update marker properties for better visualization
+        scatter_plot.update_traces(marker=dict(size=10, opacity=0.8, line=dict(width=2, color='DarkSlateGrey')))
+        # Display the chart using Streamlit
+        st.plotly_chart(scatter_plot)
+
+
+        # 4.2 Histograms
+        col1, col2 = st.columns(2)
+        with col1:
+            fig = px.histogram(filtered_data, x="tenure", color="churn", marginal="box", nbins=50, title="Histogram for Tenure")
+            st.plotly_chart(fig)
+
+        with col2:
+            # Churn by monthly charges
+            fig = px.histogram(filtered_data, x="monthlycharges", color="churn", marginal="box", nbins=50, title="Histogram for Monthly Charges")
+            st.plotly_chart(fig)
+
+        # 4.3 Correlation Matrix and Heatmap for Numeric Variables
+        # Separate numeric and categorical columns
+        numeric_columns = filtered_data.select_dtypes(include=['number']).columns
+        categorical_columns = filtered_data.select_dtypes(include=['object', 'category']).columns
+
+        numeric_df = filtered_data[numeric_columns]
+        numeric_correlation_matrix = numeric_df.corr()
+
+        # Convert correlation matrix to Plotly's heatmap format
+        fig = px.imshow(
+            numeric_correlation_matrix.values,
+            x=numeric_correlation_matrix.columns,
+            y=numeric_correlation_matrix.columns,
+            labels=dict(color="Correlation"),
+            color_continuous_scale='RdBu',  # Use a suitable colorscale
+            zmin=-1, zmax=1  
+        )
+
+        # Update layout of the heatmap
+        fig.update_layout(
+            title='Correlation Matrix Heatmap',
+            xaxis_title="Numeric Variables",
+            yaxis_title="Numeric Variables",
+            width=800,
+            height=600,
+        )
+
+        # Add annotations for correlation values
+        annotations = []
+        for i, row in enumerate(numeric_correlation_matrix.values):
+            for j, value in enumerate(row):
+                annotations.append(dict(x=numeric_correlation_matrix.columns[j], y=numeric_correlation_matrix.index[i],
+                                        text=f"{value:.2f}", showarrow=False, font=dict(color='black')))
+
+        fig.update_layout(annotations=annotations)
+
         st.plotly_chart(fig)
 
-    with col2:
-        # Churn by monthly charges
-        fig = px.histogram(filtered_data, x="monthlycharges", color="churn", marginal="box", nbins=50, title="Histogram for Monthly Charges")
+        # 4.4  Trend of average monthly charges by tenure
+        avg_monthly_charges = filtered_data.groupby('tenure')['monthlycharges'].mean().reset_index()
+
+        # Plotly line chart
+        fig = px.line(avg_monthly_charges, x='tenure', y='monthlycharges', title='Average MonthlyCharges Trend by Tenure')
+        fig.update_layout(
+            xaxis_title='Tenure',
+            yaxis_title='Average Monthly Charges',
+            width=800,
+            height=500,
+        )
         st.plotly_chart(fig)
 
-# 4.3 Correlation Matrix and Heatmap for Numeric Variables
-    # Separate numeric and categorical columns
-    numeric_columns = filtered_data.select_dtypes(include=['number']).columns
-    categorical_columns = filtered_data.select_dtypes(include=['object', 'category']).columns
+        # churn rate by tenure
+        churn_counts = filtered_data.groupby('tenure')['churn'].value_counts().unstack(fill_value=0)
+        churn_counts['Churn Rate'] = churn_counts['Yes'] / churn_counts.sum(axis=1) * 100
+        churn_counts = churn_counts.reset_index()
 
-    numeric_df = filtered_data[numeric_columns]
-    numeric_correlation_matrix = numeric_df.corr()
+        # Plotly line chart
+        fig = px.line(churn_counts, x='tenure', y='Churn Rate', title='Churn Rate by Tenure')
+        fig.update_layout(
+            xaxis_title='Tenure',
+            yaxis_title='Churn Rate (%)',
+            width=800,
+            height=500,
+        )
 
-    # Convert correlation matrix to Plotly's heatmap format
-    fig = px.imshow(
-        numeric_correlation_matrix.values,
-        x=numeric_correlation_matrix.columns,
-        y=numeric_correlation_matrix.columns,
-        labels=dict(color="Correlation"),
-        color_continuous_scale='RdBu',  # Use a suitable colorscale
-        zmin=-1, zmax=1  
-    )
+        # Display the chart using Streamlit
+        st.plotly_chart(fig)
 
-    # Update layout of the heatmap
-    fig.update_layout(
-        title='Correlation Matrix Heatmap',
-        xaxis_title="Numeric Variables",
-        yaxis_title="Numeric Variables",
-        width=800,
-        height=600,
-    )
+    # 5. Define KPI Function
+    def kpi_dash():
+        st.write('<div ><h3>Delve into Key Performance Indicators Insights</h3></div>', unsafe_allow_html=True)
 
-    # Add annotations for correlation values
-    annotations = []
-    for i, row in enumerate(numeric_correlation_matrix.values):
-        for j, value in enumerate(row):
-            annotations.append(dict(x=numeric_correlation_matrix.columns[j], y=numeric_correlation_matrix.index[i],
-                                    text=f"{value:.2f}", showarrow=False, font=dict(color='black')))
-
-    fig.update_layout(annotations=annotations)
-
-    st.plotly_chart(fig)
-
-# 4.4  Trend of average monthly charges by tenure
-    avg_monthly_charges = filtered_data.groupby('tenure')['monthlycharges'].mean().reset_index()
-
-    # Plotly line chart
-    fig = px.line(avg_monthly_charges, x='tenure', y='monthlycharges', title='Average MonthlyCharges Trend by Tenure')
-    fig.update_layout(
-        xaxis_title='Tenure',
-        yaxis_title='Average Monthly Charges',
-        width=800,
-        height=500,
-    )
-    st.plotly_chart(fig)
-
-    # churn rate by tenure
-    churn_counts = filtered_data.groupby('tenure')['churn'].value_counts().unstack(fill_value=0)
-    churn_counts['Churn Rate'] = churn_counts['Yes'] / churn_counts.sum(axis=1) * 100
-    churn_counts = churn_counts.reset_index()
-
-    # Plotly line chart
-    fig = px.line(churn_counts, x='tenure', y='Churn Rate', title='Churn Rate by Tenure')
-    fig.update_layout(
-        xaxis_title='Tenure',
-        yaxis_title='Churn Rate (%)',
-        width=800,
-        height=500,
-    )
-
-    # Display the chart using Streamlit
-    st.plotly_chart(fig)
-
-# 5. Define KPI Function
-def kpi_dash():
-    st.write('<div ><h3>Delve into Key Performance Indicators Insights</h3></div>', unsafe_allow_html=True)
-
-    total_customers = len(filtered_data)
-    churned_customers = (filtered_data['churn'] == 'Yes').sum()
-    churn_rate = (churned_customers / total_customers) * 100
-    avg_monthly_charge = filtered_data['monthlycharges'].mean()
-    avg_total_charge = filtered_data['totalcharges'].mean()
-    avg_tenure = filtered_data['tenure'].mean()
+        total_customers = len(filtered_data)
+        churned_customers = (filtered_data['churn'] == 'Yes').sum()
+        churn_rate = (churned_customers / total_customers) * 100
+        avg_monthly_charge = filtered_data['monthlycharges'].mean()
+        avg_total_charge = filtered_data['totalcharges'].mean()
+        avg_tenure = filtered_data['tenure'].mean()
 
     # Define CSS for card visuals with background color and drop shadow
     st.write("""
@@ -202,7 +205,7 @@ def kpi_dash():
                 font-weight: bold;
                 margin-bottom: 10px;
                 color: white;
-             
+                
             }
             .kpi-value {
                 font-size: 20px;
@@ -213,7 +216,7 @@ def kpi_dash():
     """, unsafe_allow_html=True)
 
 
-# 5.2 Display KPIs as card visuals with background color and drop shadow
+    # 5.2 Display KPIs as card visuals with background color and drop shadow
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -238,10 +241,10 @@ def kpi_dash():
 
 
 
-# 5.3 Visualization section
+    # 5.3 Visualization section
     st.header("Churn")
 
-# Example visualization: Distribution of churn
+    # Example visualization: Distribution of churn
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Distribution of Churn")
@@ -255,7 +258,7 @@ def kpi_dash():
         fig = px.pie(values=contract_churn_counts.sum(axis=1), names=contract_churn_counts.index)
         st.plotly_chart(fig)
 
-# Example visualization: Churn by payment method
+    # Example visualization: Churn by payment method
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Churn by Payment Method")
@@ -271,7 +274,7 @@ def kpi_dash():
         st.plotly_chart(fig)
 
 
-# 5.4 Comparative Bar Graphs
+    # 5.4 Comparative Bar Graphs
             
     st.header("Distribution of Churn by Demography")
 
@@ -357,12 +360,12 @@ def kpi_dash():
         # Display the figure in StreamlitS
         st.plotly_chart(fig)
 
-if __name__ == "__main__":
-    with st.sidebar:
-        st.selectbox('Select the type of dashboard', options=['KPI', 'EDA'], key='selected_dashboard_type')
+    if __name__ == "__main__":
+        with st.sidebar:
+            st.selectbox('Select the type of dashboard', options=['KPI', 'EDA'], key='selected_dashboard_type')
 
-    if st.session_state['selected_dashboard_type'] == 'KPI':
-        kpi_dash()
-    else:
-        eda_dash()
+        if st.session_state['selected_dashboard_type'] == 'KPI':
+            kpi_dash()
+        else:
+            eda_dash()
 

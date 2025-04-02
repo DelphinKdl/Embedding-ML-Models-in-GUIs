@@ -1,40 +1,18 @@
 #libraries
 import streamlit as st
 import pickle
-from pathlib import Path
-import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
+from pathlib import Path
+import streamlit_authenticator as stauth
 from streamlit_authenticator.utilities import Hasher
 
-st.set_page_config(
-    page_title=" Customer Churn Prediction App!",
-    page_icon="bar_chart:",
-    layout="wide"
+st.set_page_config(page_title=" Customer Churn Prediction App!",page_icon="bar_chart:",layout="wide")
 
-)
 
-with open('config.yaml') as file:
-    config = yaml.load(file, Loader=SafeLoader)
 
-# Pre-hashing all plain text passwords once
-# Hasher.hash_passwords(config['credentials'])
-Hasher.hash_passwords(config["credentials"])
 
-authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days'],
-    config['pre-authorized'],
-    auto_hash=False
-    )
-authenticator.login("main", "Login")
-if st.session_state['authentication_status']:
-    authenticator.logout()
-    st.write(f'Welcome *{st.session_state["name"]}*')
-   
-        
+    def show_Home():
     st.markdown("""
         <style>
         .stMarkdown {
@@ -101,10 +79,7 @@ if st.session_state['authentication_status']:
             """)
         
         st.markdown('</div>', unsafe_allow_html=True)
-elif st.session_state['authentication_status'] is False:
-    st.error('Username/password is incorrect')
-elif st.session_state['authentication_status'] is None:
-    st.warning('Please enter your username and password')
+
 
 
 
